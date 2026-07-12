@@ -130,4 +130,188 @@
   </div>
 
   <div class="footer-note">ProVA AI Business Starter Kit — a working prototype. Every draft is a starting point; read it over and make it sound like you.</div>
-</div>
+</div><script>
+const TOOLS = {
+  email: {
+    label: "Emails",
+    subtypes: {
+      "Follow-Up": "Write a short, polite follow-up email to {recipient} about {topic}. I contacted them before and haven't heard back. Keep it friendly, not pushy, and end with a clear, low-pressure next step. Extra context: {details}",
+      "Cold Outreach": "Write a short introduction email to {recipient}, a potential client. I offer {topic}. Explain the main benefit in one or two lines, keep it under 120 words, and end with a simple call to action to book a short call. Extra context: {details}",
+      "Complaint Response": "Write a calm, professional email responding to a complaint from {recipient} about {topic}. Acknowledge their frustration, apologize without over-explaining, and offer a solution. Keep the tone warm and solution-focused. Extra context: {details}",
+      "Payment Reminder": "Write a polite but firm payment reminder email to {recipient} regarding {topic}. Keep the relationship friendly while making the next step clear. Extra context: {details}",
+      "Meeting Request": "Write a short email to {recipient} requesting a meeting to discuss {topic}. Keep it under 80 words. Extra context: {details}"
+    },
+    fields: [
+      {key:"recipient", label:"Recipient name / company", type:"text", placeholder:"e.g. Adaeze, Blue Rose Boutique"},
+      {key:"topic", label:"Topic / subject", type:"text", placeholder:"e.g. the invoice for March orders"},
+      {key:"details", label:"Extra details (optional)", type:"textarea", placeholder:"Anything specific to include..."}
+    ]
+  },
+  social: {
+    label: "Social Posts",
+    subtypes: {
+      "Promotional": "Write a short, engaging social media post promoting {topic} for {recipient}. Highlight the main benefit, include a simple call to action, keep it under 60 words, and suggest 3 relevant hashtags. Extra context: {details}",
+      "Educational Tip": "Write a short social media post for {recipient} sharing one practical tip about {topic}. Make it useful enough that people would want to save or share it. Keep it under 80 words. Extra context: {details}",
+      "Testimonial": "Turn this customer feedback into a short, authentic-sounding social media post for {recipient}: {details}. Keep the customer's voice, add one line about how the business helped with {topic}, and end with a soft call to action.",
+      "Behind-the-Scenes": "Write a warm, personal social media post for {recipient} giving a behind-the-scenes look at {topic}. Make it feel human and relatable, under 70 words. Extra context: {details}"
+    },
+    fields: [
+      {key:"recipient", label:"Business name", type:"text", placeholder:"e.g. Blue Rose Boutique"},
+      {key:"topic", label:"What's the post about?", type:"text", placeholder:"e.g. our new weekend delivery service"},
+      {key:"details", label:"Extra details / customer quote (optional)", type:"textarea", placeholder:"Paste a quote or add detail..."}
+    ]
+  },
+  proposal: {
+    label: "Proposals",
+    subtypes: {
+      "Standard Proposal": "Write a professional business proposal from {recipient} for {topic}. Include an overview, a scope of work, a timeline, and pricing. Keep the tone confident and client-focused, and end with a clear next step. Extra context: {details}"
+    },
+    fields: [
+      {key:"recipient", label:"Client name", type:"text", placeholder:"e.g. Femi Okafor, Okafor Logistics"},
+      {key:"topic", label:"Project / service", type:"text", placeholder:"e.g. social media management for 3 months"},
+      {key:"details", label:"Scope, timeline, pricing details", type:"textarea", placeholder:"What's included, how long, how much..."}
+    ]
+  },
+  document: {
+    label: "Business Documents",
+    subtypes: {
+      "Service Agreement Summary": "Write a clear, simple service agreement summary between {recipient} and their client for {topic}. Keep the language plain and easy to follow. Extra context: {details}",
+      "SOP / Process Guide": "Write a simple standard operating procedure for {recipient} covering {topic}. Use clear numbered steps a team member could follow. Extra context: {details}",
+      "Client Onboarding Checklist": "Write a client onboarding checklist for {recipient} for {topic}. Keep it practical and in checklist form. Extra context: {details}",
+      "Meeting Notes Summary": "Turn these rough notes into a clean, organized meeting summary for {recipient} about {topic}: {details}"
+    },
+    fields: [
+      {key:"recipient", label:"Your business name", type:"text", placeholder:"e.g. ProVA Support Network"},
+      {key:"topic", label:"What's this document for?", type:"text", placeholder:"e.g. onboarding a new VA client"},
+      {key:"details", label:"Key points to include", type:"textarea", placeholder:"List anything specific..."}
+    ]
+  }
+};
+
+let activeTool = "email";
+let activeSubtype = Object.keys(TOOLS.email.subtypes)[0];
+
+function renderTabs(){
+  const tabsEl = document.getElementById("tabs");
+  tabsEl.innerHTML = "";
+  Object.keys(TOOLS).forEach(key => {
+    const btn = document.createElement("div");
+    btn.className = "tab" + (key === activeTool ? " active" : "");
+    btn.textContent = TOOLS[key].label;
+    btn.onclick = () => { activeTool = key; activeSubtype = Object.keys(TOOLS[key].subtypes)[0]; renderTabs(); renderForm(); resetOutput(); };
+    tabsEl.appendChild(btn);
+  });
+}
+
+function renderForm(){
+  const tool = TOOLS[activeTool];
+  const card = document.getElementById("formCard");
+  card.innerHTML = "";
+
+  const h3 = document.createElement("h3");
+  h3.textContent = tool.label;
+  card.appendChild(h3);
+
+  const subLabel = document.createElement("label");
+  subLabel.textContent = "Type";
+  card.appendChild(subLabel);
+
+  const select = document.createElement("select");
+  Object.keys(tool.subtypes).forEach(st => {
+    const opt = document.createElement("option");
+    opt.value = st; opt.textContent = st;
+    if(st === activeSubtype) opt.selected = true;
+    select.appendChild(opt);
+  });
+  select.onchange = (e) => { activeSubtype = e.target.value; };
+  card.appendChild(select);
+
+  const inputs = {};
+  tool.fields.forEach(f => {
+    const lbl = document.createElement("label");
+    lbl.textContent = f.label;
+    card.appendChild(lbl);
+    let input;
+    if(f.type === "textarea"){
+      input = document.createElement("textarea");
+    } else {
+      input = document.createElement("input");
+      input.type = "text";
+    }
+    input.placeholder = f.placeholder || "";
+    input.id = "field_" + f.key;
+    card.appendChild(input);
+    inputs[f.key] = input;
+  });
+
+  const genBtn = document.createElement("button");
+  genBtn.className = "generate-btn";
+  genBtn.textContent = "Generate Draft";
+  genBtn.onclick = generate;
+  card.appendChild(genBtn);
+}
+
+function resetOutput(){
+  document.getElementById("outputBody").innerHTML = '<span class="placeholder">Fill in the details on the left and click Generate — your draft will appear here in a few seconds.</span>';
+  const copyBtn = document.getElementById("copyBtn");
+  copyBtn.textContent = "Copy"; copyBtn.classList.remove("copied");
+}
+
+function showLoading(){
+  document.getElementById("outputBody").innerHTML = `
+    <div class="loading-wrap">
+      <svg class="spinner" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40" fill="none" stroke="#2A2A2E" stroke-width="6"/>
+        <path d="M 50 10 A 40 40 0 0 1 90 50" fill="none" stroke="#C9A227" stroke-width="6" stroke-linecap="round"/>
+      </svg>
+      <div class="msg">Drafting your ${TOOLS[activeTool].label.toLowerCase().slice(0,-1)}...</div>
+    </div>`;
+}
+
+function fillTemplate(str, values){
+  return str.replace(/\{(\w+)\}/g, (m, key) => values[key] && values[key].trim() ? values[key] : "not specified");
+}
+
+async function generate(){
+  const tool = TOOLS[activeTool];
+  const template = tool.subtypes[activeSubtype];
+  const values = {};
+  tool.fields.forEach(f => { values[f.key] = document.getElementById("field_" + f.key).value; });
+
+  const prompt = fillTemplate(template, values);
+  showLoading();
+
+  try{
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt })
+    });
+    const data = await response.json();
+    if(!response.ok){
+      document.getElementById("outputBody").innerHTML = '<span class="error">' + (data.error || "Something went wrong. Please try again.") + '</span>';
+      return;
+    }
+    const text = (data.content || []).map(b => b.text || "").join("\n").trim();
+    document.getElementById("outputBody").textContent = text || "No draft was returned — try again.";
+  } catch(err){
+    document.getElementById("outputBody").innerHTML = '<span class="error">Something went wrong generating this draft. Please try again.</span>';
+    console.error(err);
+  }
+}
+
+function copyOutput(){
+  const text = document.getElementById("outputBody").innerText;
+  if(!text || text.includes("Fill in the details")) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById("copyBtn");
+    btn.textContent = "Copied ✓"; btn.classList.add("copied");
+    setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1800);
+  });
+}
+
+renderTabs();
+renderForm();
+</script>
+</body>
+</html>

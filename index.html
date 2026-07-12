@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProVA AI Business Starter Kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0B0D;
+    --panel:#151517;
+    --panel-2:#1C1C1F;
+    --border:#2A2A2E;
+    --gold:#C9A227;
+    --gold-light:#E8C766;
+    --white:#F5F3EE;
+    --grey:#9CA3AF;
+    --success:#3FA35C;
+    --danger:#D9765A;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--white);font-family:'Inter',sans-serif;}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 20px 60px;}
+
+  .header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:6px;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand svg{flex-shrink:0;}
+  .brand-text .name{font-family:'Poppins',sans-serif;font-weight:800;font-size:22px;letter-spacing:0.3px;}
+  .brand-text .name span{color:var(--gold);}
+  .brand-text .tag{font-size:10px;letter-spacing:2.5px;color:var(--grey);text-transform:uppercase;margin-top:2px;}
+
+  .kit-title{font-family:'Poppins',sans-serif;font-weight:700;font-size:15px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold-light);text-align:right;}
+
+  .divider{height:1px;background:linear-gradient(90deg, transparent, var(--gold) 15%, var(--gold-light) 50%, var(--gold) 85%, transparent);margin:20px 0 28px;opacity:0.6;}
+
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
+  .tab{
+    padding:10px 18px;border-radius:999px;border:1px solid var(--border);
+    background:var(--panel);color:var(--grey);font-size:13px;font-weight:600;
+    cursor:pointer;transition:all .2s ease;letter-spacing:0.3px;
+  }
+  .tab:hover{border-color:var(--gold);color:var(--white);}
+  .tab.active{background:var(--gold);color:#141414;border-color:var(--gold);}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:720px){.grid{grid-template-columns:1fr;}}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;}
+  .card h3{font-family:'Poppins',sans-serif;font-size:14px;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold-light);margin:0 0 18px;}
+
+  label{display:block;font-size:12.5px;color:var(--grey);margin:14px 0 6px;font-weight:500;}
+  label:first-of-type{margin-top:0;}
+  select, input[type=text], textarea{
+    width:100%;background:var(--panel-2);border:1px solid var(--border);color:var(--white);
+    border-radius:8px;padding:10px 12px;font-family:'Inter',sans-serif;font-size:14px;
+  }
+  select:focus, input:focus, textarea:focus{outline:none;border-color:var(--gold);}
+  textarea{resize:vertical;min-height:70px;}
+
+  .generate-btn{
+    margin-top:20px;width:100%;padding:13px;border:none;border-radius:8px;
+    background:linear-gradient(135deg, var(--gold-light), var(--gold));
+    color:#161616;font-weight:700;font-size:14px;letter-spacing:0.4px;cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .generate-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(201,162,39,0.25);}
+  .generate-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;box-shadow:none;}
+
+  .output-card{display:flex;flex-direction:column;min-height:280px;}
+  .output-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .output-head h3{margin:0;}
+  .copy-btn{
+    background:transparent;border:1px solid var(--border);color:var(--grey);
+    padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s ease;
+  }
+  .copy-btn:hover{border-color:var(--gold);color:var(--gold-light);}
+  .copy-btn.copied{border-color:var(--success);color:var(--success);}
+
+  .output-body{
+    flex:1;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;
+    padding:16px;font-size:14px;line-height:1.6;color:var(--white);white-space:pre-wrap;
+    overflow-y:auto;
+  }
+  .placeholder{color:var(--grey);font-style:italic;font-size:13.5px;}
+
+  .loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;padding:30px 0;}
+  .loading-wrap .msg{font-size:12.5px;color:var(--grey);letter-spacing:0.3px;}
+  .spinner{width:52px;height:52px;animation:spin 1.4s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .error{color:var(--danger);font-size:13px;}
+
+  .footer-note{margin-top:32px;text-align:center;font-size:11.5px;color:var(--grey);letter-spacing:0.3px;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <div class="brand">
+      <svg width="40" height="40" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="#2A2A2E" stroke-width="3"/>
+        <path d="M 50 8 A 42 42 0 0 1 88 62" fill="none" stroke="#C9A227" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="50" cy="8" r="5" fill="#C9A227"/>
+      </svg>
+      <div class="brand-text">
+        <div class="name">Pro<span>VA</span> Support Network</div>
+        <div class="tag">Supporting Brands · Streamlining Tasks</div>
+      </div>
+    </div>
+    <div class="kit-title">Automated AI<br/>Business Starter Kit</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="grid">
+    <div class="card" id="formCard"></div>
+    <div class="card output-card">
+      <div class="output-head">
+        <h3>Your Draft</h3>
+        <button class="copy-btn" id="copyBtn" onclick="copyOutput()">Copy</button>
+      </div>
+      <div class="output-body" id="outputBody">
+        <span class="placeholder">Fill in the details on the left and click Generate — your draft will appear here in a few seconds.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">ProVA AI Business Starter Kit — a working prototype. Every draft is a starting point; read it over and make it sound like you.</div>
+</div>
